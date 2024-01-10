@@ -1,0 +1,12 @@
+numpy
+pandas
+seaborn
+scipy
+matplotlib
+scikit-learn
+xgboost
+battery-data-toolkit
+iisignature
+esig
+shap
+PyYAML
