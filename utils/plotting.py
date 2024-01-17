@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib import rc
 import numpy as np
+import pandas as pd
 from typing import Callable
 from utils.definitions import ROOT_DIR
 from utils import experiment, generic_helper
@@ -1012,3 +1013,82 @@ def graphical_abstract(prediction_data_list: list, analysis_result: dict) -> Non
         fname=f"{ROOT_DIR}/plots/parity_polt_feature_importance.svg",
         bbox_inches="tight",
     )
+
+
+def strip_plot_firstpulse_cycle_life(
+    structured_data_with_pulse: dict,
+    *,
+    pulse_cycle: bool,
+    ylabel: str
+) -> None:
+    cathode_groups = [
+        ' Li1.35Ni0.33Mn0.67O2.35',
+        ' Li1.2Ni0.3Mn0.6O2',
+        'FCG',
+        'NMC811',
+        'NMC622',
+        'NMC532',
+        'NMC111',
+        'HE5050',
+        '5Vspinel'
+    ]
+    _, ax = plt.subplots(figsize=set_size())
+   
+    groups = []
+    cycles = []
+
+    for grp in cathode_groups:
+        grp_data = {
+            k: structured_data_with_pulse[k]
+            for k in structured_data_with_pulse
+            if structured_data_with_pulse[k]["summary"]["cathode_group"] == grp
+        }
+        if pulse_cycle:
+            x_values = [list(grp_data[cell]["pulses"])[0] for cell in grp_data]
+        else:
+            x_values = [grp_data[cell]["summary"]["end_of_life"] for cell in grp_data]
+
+        cycles.extend(x_values)
+        groups.extend([grp] * len(x_values))
+
+
+    cycle_group_df = pd.DataFrame()
+    cycle_group_df[ylabel] = cycles
+    cycle_group_df["Cathode group"] = groups
+    
+    # rename the last two cathodes to have a nice look
+    mod_cathode_groups = cathode_groups.copy()
+    mod_cathode_groups[0] = r"Li$_{1.35}$Ni$_{0.33}$Mn$_{0.67}$O$_{2.35}$"
+    mod_cathode_groups[1] = r"Li$_{1.2}$Ni$_{0.3}$Mn$_{0.6}$O$_2$"
+  
+
+    sns.stripplot(
+        data=cycle_group_df,
+        y=ylabel,
+        x="Cathode group",
+        edgecolor="red",
+        facecolor="white",
+        alpha=.7,
+        color="red",
+        marker="o",
+        linewidth=1,
+        ax=ax,
+    )
+
+
+    ax.set_xticks(ticks=cathode_groups, labels=mod_cathode_groups)
+    ax.spines[
+        [
+            "top",
+            "right",
+        ]
+    ].set_visible(False)
+    ax.tick_params(axis="x", rotation=90)
+
+
+    save_tag = "first_pulse" if pulse_cycle else "end_of_life"
+    plt.savefig(
+        f"{ROOT_DIR}/plots/pulse_project_stripplot_{save_tag}.pdf", bbox_inches="tight"
+    )
+
+    return None
