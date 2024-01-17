@@ -1016,24 +1016,21 @@ def graphical_abstract(prediction_data_list: list, analysis_result: dict) -> Non
 
 
 def strip_plot_firstpulse_cycle_life(
-    structured_data_with_pulse: dict,
-    *,
-    pulse_cycle: bool,
-    ylabel: str
+    structured_data_with_pulse: dict, *, pulse_cycle: bool, ylabel: str
 ) -> None:
     cathode_groups = [
-        ' Li1.35Ni0.33Mn0.67O2.35',
-        ' Li1.2Ni0.3Mn0.6O2',
-        'FCG',
-        'NMC811',
-        'NMC622',
-        'NMC532',
-        'NMC111',
-        'HE5050',
-        '5Vspinel'
+        " Li1.35Ni0.33Mn0.67O2.35",
+        " Li1.2Ni0.3Mn0.6O2",
+        "FCG",
+        "NMC811",
+        "NMC622",
+        "NMC532",
+        "NMC111",
+        "HE5050",
+        "5Vspinel",
     ]
     _, ax = plt.subplots(figsize=set_size())
-   
+
     groups = []
     cycles = []
 
@@ -1051,16 +1048,14 @@ def strip_plot_firstpulse_cycle_life(
         cycles.extend(x_values)
         groups.extend([grp] * len(x_values))
 
-
     cycle_group_df = pd.DataFrame()
     cycle_group_df[ylabel] = cycles
     cycle_group_df["Cathode group"] = groups
-    
+
     # rename the last two cathodes to have a nice look
     mod_cathode_groups = cathode_groups.copy()
     mod_cathode_groups[0] = r"Li$_{1.35}$Ni$_{0.33}$Mn$_{0.67}$O$_{2.35}$"
     mod_cathode_groups[1] = r"Li$_{1.2}$Ni$_{0.3}$Mn$_{0.6}$O$_2$"
-  
 
     sns.stripplot(
         data=cycle_group_df,
@@ -1068,13 +1063,12 @@ def strip_plot_firstpulse_cycle_life(
         x="Cathode group",
         edgecolor="red",
         facecolor="white",
-        alpha=.7,
+        alpha=0.7,
         color="red",
         marker="o",
         linewidth=1,
         ax=ax,
     )
-
 
     ax.set_xticks(ticks=cathode_groups, labels=mod_cathode_groups)
     ax.spines[
@@ -1084,7 +1078,6 @@ def strip_plot_firstpulse_cycle_life(
         ]
     ].set_visible(False)
     ax.tick_params(axis="x", rotation=90)
-
 
     save_tag = "first_pulse" if pulse_cycle else "end_of_life"
     plt.savefig(
