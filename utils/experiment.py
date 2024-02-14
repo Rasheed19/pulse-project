@@ -1,7 +1,7 @@
 import importlib
 import numpy as np
 import pandas as pd
-from typing import Callable
+from typing import Callable, Tuple, Union, List
 from scipy.interpolate import interp1d
 import shap
 from xgboost import XGBClassifier, XGBRegressor
@@ -9,6 +9,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GridSearchCV, cross_validate
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.base import RegressorMixin, ClassifierMixin
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -28,18 +29,7 @@ importlib.reload(extraction)
 importlib.reload(generic_helper)
 
 
-def metric_calculator(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
-    """
-    A function that calculates regression metric.
-
-    Args:
-    ----
-            y_true:  an array containing the true values of y
-            y_pred:  an array containing the predicted values of y
-    Returns:
-    -------
-            dictionary of metrics
-    """
+def metric_calculator_regression(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
 
     return {
         "MAE": mean_absolute_error(y_true, y_pred),
@@ -73,7 +63,7 @@ def metric_calculator_classification(
 
 def naive_confidence_interval(
     data: np.ndarray, confidence_level: float, percentile_interval: bool = False
-) -> tuple:
+) -> Tuple[float, float]:
     """
     Calculate confidence interval via normality assumption
     or percentiles.
@@ -115,11 +105,7 @@ def bootstrap_metric(
     *,
     predicted_proba: np.ndarray = None,
     mode: str = "regression",
-) -> tuple:
-    """
-    This function generates n_bootsraps bootstraps
-    for given metrics.
-    """
+) -> np.ndarray:
 
     boot_dim = 2 if mode == "regression" else 5
 
@@ -147,7 +133,7 @@ def bootstrap_metric(
                 low=0, high=sample_size, size=sample_size
             )  # end value is excluded
 
-            metrics = metric_calculator(
+            metrics = metric_calculator_regression(
                 y_true=actual_values[sample_idx_], y_pred=predicted_values[sample_idx_]
             )
 
@@ -157,7 +143,7 @@ def bootstrap_metric(
     return bootstraps
 
 
-def empirical_cdf(data: np.ndarray) -> tuple:
+def empirical_cdf(data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate the empirical cumulative distribution function (CDF)
     from an array of data points.
@@ -215,7 +201,8 @@ def inverse_empirical_cdf(data: np.ndarray, probability: float) -> float:
 
 def pivotal_confidence_interval(
     estimate_on_all_samples: float, bootstraps: np.ndarray, alpha: float
-) -> tuple:
+) -> Tuple[float, float]:
+
     bootstraps_shifted = bootstraps - estimate_on_all_samples
     return (
         estimate_on_all_samples
@@ -224,13 +211,17 @@ def pivotal_confidence_interval(
     )
 
 
-def rounder(value: float, n_dp: int = 2) -> float:
-    return np.round(value, n_dp)
+def rounder(value: float, decimal_place: int = 2) -> float:
+    return np.round(value, decimal_place)
 
 
 def display_training_result(
-    pipeline: object, model: object, split_data: dict, alpha: float
-) -> tuple([pd.DataFrame, dict]):
+    pipeline: extraction.FeaturesTargetExtractor,
+    model: RegressorMixin,
+    split_data: dict,
+    alpha: float,
+) -> Tuple[pd.DataFrame, dict]:
+
     prediction_data = {}
     metric_ci_data = pd.DataFrame(
         index=split_data.keys(),
@@ -240,7 +231,7 @@ def display_training_result(
         X, y = pipeline.transform(value)
         prediction = model.predict(X)
 
-        metric = metric_calculator(y_true=y, y_pred=prediction)
+        metric = metric_calculator_regression(y_true=y, y_pred=prediction)
         prediction_data[key] = {"actual": y, "prediction": prediction, "score": metric}
 
         # fix model, bootstrap predictions on data
@@ -291,8 +282,12 @@ def get_fitted_xgboost_model(
 
 
 def display_training_result_clf(
-    pipeline: object, model: object, split_data: dict, alpha: float
-) -> tuple([pd.DataFrame, dict]):
+    pipeline: extraction.FeaturesTargetExtractor,
+    model: ClassifierMixin,
+    split_data: dict,
+    alpha: float,
+) -> Tuple[pd.DataFrame, dict]:
+
     prediction_data = {}
 
     metric_ci_data = pd.DataFrame(
@@ -341,7 +336,10 @@ def display_training_result_clf(
 
 
 def permutation_feature_importance(
-    fitted_model: object, X: np.ndarray, y: np.ndarray, scoring_function: str
+    fitted_model: Union[RegressorMixin, ClassifierMixin],
+    X: np.ndarray,
+    y: np.ndarray,
+    scoring_function: str,
 ) -> np.ndarray:
     result = permutation_importance(
         estimator=fitted_model,
@@ -356,13 +354,8 @@ def permutation_feature_importance(
 
 
 def shap_feature_importance(fitted_model: object, X: np.ndarray) -> np.ndarray:
-    # create an explainer using SHAP
     explainer = shap.Explainer(fitted_model, X)
-
-    # calculate SHAP values
     shap_values = explainer(X)
-
-    # get mean absolute SHAP values for each feature
     mean_shap_values = np.abs(shap_values.values).mean(axis=0)
 
     return mean_shap_values
@@ -404,13 +397,13 @@ def feature_importance_analysis(
                     fitted_model=value["fitted_model"], X=X, y=y, scoring_function="f1"
                 )
             else:
-                feature_importance = (
-                    feature_importance
-                ) = permutation_feature_importance(
-                    fitted_model=value["fitted_model"],
-                    X=X,
-                    y=y,
-                    scoring_function="neg_mean_squared_error",
+                feature_importance = feature_importance = (
+                    permutation_feature_importance(
+                        fitted_model=value["fitted_model"],
+                        X=X,
+                        y=y,
+                        scoring_function="neg_mean_squared_error",
+                    )
                 )
 
             feature_importance = scaler(feature_importance)
@@ -426,9 +419,11 @@ def feature_importance_analysis(
             X, y = value["pipeline"].transform(validation_set)
             feature_importance = scaler(
                 shap_feature_importance(
-                    fitted_model=value["fitted_model"]
-                    if key == "classification"
-                    else value["fitted_model"].regressor_,
+                    fitted_model=(
+                        value["fitted_model"]
+                        if key == "classification"
+                        else value["fitted_model"].regressor_
+                    ),
                     X=X,
                 )
             )
@@ -452,7 +447,13 @@ def train_model(
     trans_func: Callable[[dict, int], tuple],
     scorer: str,
     cv: int = 5,
-):
+) -> Tuple[
+    extraction.FeaturesTargetExtractor,
+    dict,
+    Union[RegressorMixin, ClassifierMixin],
+    float,
+    int,
+]:
     pipeline = extraction.FeaturesTargetExtractor(
         signature_depth=signature_depth, threshold=threshold, trans_func=trans_func
     )
@@ -496,10 +497,13 @@ def effect_time_threshold(
     trans_func: Callable[[dict, int], tuple],
     scorer: str,
     *,
-    list_of_threshold: list = [i for i in range(20, 201, 20)],
-):
+    list_of_threshold: List[int] = None,
+) -> Tuple[list, float, float]:
     threshold_score_cv = []
     threshold_std_cv = []
+
+    if list_of_threshold is None:
+        list_of_threshold = [i for i in range(20, 201, 20)]
 
     for threshold in list_of_threshold:
         _, _, _, best_score, best_std = train_model(
@@ -527,7 +531,7 @@ def leave_one_group_out_validation(
     param_grid: dict,
     scorer: str,
     problem_type: str,
-):
+) -> dict:
     cathode_groups = ["NMC532", "HE5050", "5Vspinel", "NMC622", "NMC111", "NMC811"]
 
     group_metric = {}
@@ -572,7 +576,11 @@ def leave_one_group_out_validation(
     return group_metric
 
 
-def log_model_pipeline(pipeline, model, model_name):
+def log_model_pipeline(
+    pipeline: extraction.FeaturesTargetExtractor,
+    model: Union[RegressorMixin, ClassifierMixin],
+    model_name: str,
+) -> None:
     # dump the pipeline
     generic_helper.dump_data(
         data=pipeline, path=f"{ROOT_DIR}/models", fname=f"{model_name}_pipeline.pkl"

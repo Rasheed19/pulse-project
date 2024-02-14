@@ -4,7 +4,7 @@ import random
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
-from typing import Callable
+from typing import Callable, Tuple, Union
 from utils import generic_helper
 
 importlib.reload(generic_helper)
@@ -16,7 +16,7 @@ def get_data_for_eol_prediction(
     threshold: float,
     *,
     with_cathode_groups: bool = False
-) -> np.ndarray:
+) -> Union[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     This function creates features (for end of life
     prediction) from a structured data
@@ -73,7 +73,7 @@ def get_data_for_rul_prediction(
     threshold: float,
     *,
     with_cathode_groups: bool = False
-) -> tuple:
+) -> Union[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     X = []
     y = []
     y_cathode_groups = []
@@ -117,7 +117,7 @@ def get_data_for_rul_prediction(
 
 def get_data_for_classification(
     structured_data: dict, signature_depth: int, threshold: float
-) -> tuple:
+) -> Tuple[np.ndarray, np.ndarray]:
     X = []
     y = []
 
@@ -137,15 +137,6 @@ def get_data_for_classification(
                 else:
                     y.append(1)  # positive calss: has not passed eol
 
-                # X.append(
-                #     generic_helper.get_path_signatures(
-                #         time=value["pulses"][pulse]['time'],
-                #         current=value["pulses"][pulse]['current'],
-                #         voltage=value["pulses"][pulse]['voltage'],
-                #         signature_depth=signature_depth,
-                #         threshold=threshold
-                # ).tolist())
-
                 X.append(temp_features.tolist())
 
     X = np.array(X)
@@ -161,7 +152,7 @@ def get_data_for_classification(
     return X[shuffled_indices], y[shuffled_indices]
 
 
-def processing_pipeline():
+def processing_pipeline() -> Pipeline:
     return Pipeline([("imputer", SimpleImputer()), ("scaler", StandardScaler())])
 
 

@@ -5,16 +5,18 @@ import pickle
 import iisignature
 import esig
 import yaml
-
+from typing import Tuple, Any
 
 
 def data_splitting(
     data: dict,
     test_ratio: float,
     cathode_group: str = None,
-) -> tuple:
+) -> Tuple[dict, dict]:
     """
     Function to split data into train and test sets.
+    It ensures that each split has at least a cell
+    from each cathode chemistries.
 
     Args:
     ----
@@ -61,7 +63,9 @@ def data_splitting(
     return ({k: data[k] for k in train_cells}, {k: data[k] for k in test_cells})
 
 
-def bring_splits_together(data: dict, cathode_groups: list, test_ratio: float) -> tuple:
+def bring_splits_together(
+    data: dict, cathode_groups: list, test_ratio: float
+) -> Tuple[dict, dict]:
     train, test = {}, {}
 
     for group in cathode_groups:
@@ -82,15 +86,14 @@ def shuffle_dictionary(dictionary: dict) -> dict:
     return {key: dictionary[key] for key in keys}
 
 
-def read_data(path, fname):
-    # load pickle data
+def read_data(path: str, fname: str) -> Any:
     with open(os.path.join(path, fname), "rb") as fp:
         data = pickle.load(fp)
 
     return data
 
 
-def dump_data(data, path, fname):
+def dump_data(data: Any, path: str, fname: str) -> None:
     with open(os.path.join(path, fname), "wb") as fp:
         pickle.dump(data, fp)
 
@@ -134,7 +137,6 @@ def get_path_signatures(
             numpy array of path signatures.
     """
 
-    # create path
     if threshold is None:
         path = np.stack((time, current, voltage), axis=-1)
 
@@ -144,7 +146,8 @@ def get_path_signatures(
         else:
             threshold_bool = (time >= threshold[0]) & (time <= threshold[1])
 
-        if len(time[threshold_bool]) == 0:
+        IS_EMPTY = 0
+        if time[threshold_bool].shape[0] == IS_EMPTY:
             return np.array([])
 
         time = time[threshold_bool] - time[threshold_bool].min()
@@ -152,7 +155,6 @@ def get_path_signatures(
         voltage = voltage[threshold_bool]
         path = np.stack((time, current, voltage), axis=-1)
 
-    # calculate the signature of the path
     return iisignature.sig(path, signature_depth)
 
 
@@ -164,9 +166,9 @@ def jaccard_similarity(list1: list, list2: list) -> float:
 
     return intersection / union
 
-def load_yaml_file(path: str):
-    with open(path, 'r') as file:
-        data = yaml.safe_load(file)
-    
-    return data
 
+def load_yaml_file(path: str) -> dict:
+    with open(path, "r") as file:
+        data = yaml.safe_load(file)
+
+    return data

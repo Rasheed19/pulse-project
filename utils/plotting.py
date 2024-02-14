@@ -3,9 +3,9 @@ import seaborn as sns
 from matplotlib import rc
 import numpy as np
 import pandas as pd
-from typing import Callable
+from typing import Callable, Tuple, Any, Union, List
 from utils.definitions import ROOT_DIR
-from utils import experiment, generic_helper
+from utils import experiment, generic_helper, structure_noah
 import importlib
 import itertools
 from sklearn.metrics import confusion_matrix, roc_curve
@@ -13,6 +13,7 @@ from sklearn.preprocessing import quantile_transform
 
 importlib.reload(experiment)
 importlib.reload(generic_helper)
+importlib.reload(structure_noah)
 
 
 # configure plotting style
@@ -38,7 +39,7 @@ TEXT_WIDTH = 360.0
 
 def set_size(
     width: float = TEXT_WIDTH, fraction: float = 1.0, subplots: tuple = (1, 1)
-) -> tuple:
+) -> Tuple[float, float]:
     """
     Set figure dimensions to avoid scaling in LaTeX.
 
@@ -80,7 +81,7 @@ def set_size(
     return (fig_width_in, fig_height_in)
 
 
-def axis_to_fig(axis):
+def axis_to_fig(axis: Any) -> Callable[[tuple], Any]:
     """
     Converts axis to fig object.
 
@@ -95,13 +96,13 @@ def axis_to_fig(axis):
 
     fig = axis.figure
 
-    def transform(coord):
+    def transform(coord: Union[tuple, list]):
         return fig.transFigure.inverted().transform(axis.transAxes.transform(coord))
 
     return transform
 
 
-def add_sub_axes(axis, rect):
+def add_sub_axes(axis: Any, rect: Union[tuple, list]) -> Any:
     """
     Adds sub-axis to existing axis object.
 
@@ -123,7 +124,7 @@ def add_sub_axes(axis, rect):
     return fig.add_axes([figleft, figbottom, figwidth, figheight])
 
 
-def parity_plot(prediction_data_list: list, tag: str) -> None:
+def parity_plot(prediction_data_list: List[dict], tag: str) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 2)))
     fig_labels = ["a", "b"]
     marker_style = dict(
@@ -449,7 +450,7 @@ def plot_sample_discharge_capacity(structured_data_with_pulse: dict, sample_cell
     return None
 
 
-def plot_filtered_capacity(sample_cells: list, structured_data: dict) -> None:
+def plot_filtered_capacity(sample_cells: List[str], structured_data: dict) -> None:
     fig = plt.figure(figsize=set_size(subplots=(3, 3)))
     fig_labels = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
 
@@ -518,8 +519,8 @@ def plot_filtered_capacity(sample_cells: list, structured_data: dict) -> None:
 def plot_confusion_matrix(
     true_labels: np.ndarray,
     predicted_labels: np.ndarray,
-    classes: list,
-    cmap: object = plt.cm.Blues,
+    classes: List[str],
+    cmap: Any = plt.cm.Blues,
 ) -> None:
     cm = confusion_matrix(true_labels, predicted_labels)
     cm_percent = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
@@ -632,8 +633,8 @@ def plot_cunfusion_matrix_roc_curve(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     y_score: np.ndarray,
-    classes: list,
-    cmap: object = plt.cm.Reds,
+    classes: List[str],
+    cmap: Any = plt.cm.Reds,
 ) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 2)))
     fig_labels = ["a", "b"]
@@ -762,7 +763,7 @@ def bifurcation_discriminant(
     }
 
 
-def bifurcation_diagram(bifurcation_list: list) -> None:
+def bifurcation_diagram(bifurcation_list: List[dict]) -> None:
     _, ax = plt.subplots(figsize=set_size())
 
     for i, bl in enumerate(bifurcation_list):
@@ -891,7 +892,7 @@ def plot_feature_similarity(data: dict, tag: str, fig_label: str) -> None:
     )
 
 
-def plot_combined_feature_similarity(data_list: list[dict]) -> None:
+def plot_combined_feature_similarity(data_list: List[dict]) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 3)))
     fig_labels = ["a", "b", "c"]
 
@@ -955,9 +956,11 @@ def plot_combined_feature_similarity(data_list: list[dict]) -> None:
     )
 
 
-def graphical_abstract(prediction_data_list: list, analysis_result: dict) -> None:
+def plot_analysis_graphical_abstract(
+    prediction_data_list: list, analysis_result: dict
+) -> None:
     _, axes = plt.subplots(
-        2, 1, figsize=set_size(subplots=(2, 1), fraction=0.5, width=320)
+        2, 1, figsize=set_size(subplots=(2, 1), fraction=0.5, width=400)
     )
     marker_style = dict(
         facecolor="white",  # Interior color
@@ -1059,25 +1062,23 @@ def strip_plot_firstpulse_cycle_life(
 
     sns.stripplot(
         data=cycle_group_df,
-        y=ylabel,
-        x="Cathode group",
-        edgecolor="red",
-        facecolor="white",
-        alpha=0.7,
-        color="red",
+        x=ylabel,
+        y="Cathode group",
+        alpha=0.5,
+        color="blue",
         marker="o",
-        linewidth=1,
         ax=ax,
+        linewidth=1,
     )
 
-    ax.set_xticks(ticks=cathode_groups, labels=mod_cathode_groups)
+    ax.set_yticks(ticks=cathode_groups, labels=mod_cathode_groups)
     ax.spines[
         [
             "top",
             "right",
         ]
     ].set_visible(False)
-    ax.tick_params(axis="x", rotation=90)
+    # ax.tick_params(axis="x", rotation=90)
 
     save_tag = "first_pulse" if pulse_cycle else "end_of_life"
     plt.savefig(
@@ -1085,3 +1086,179 @@ def strip_plot_firstpulse_cycle_life(
     )
 
     return None
+
+
+def plot_full_pulse_profile(
+    path_to_sample_cell: str,
+    style: str = "cropped",
+) -> None:
+    pulse, _ = structure_noah.load_h5_columns_needed(path_to_cell=path_to_sample_cell)
+    cycles = pulse["cycle_number"].unique()
+    pulse = pulse[
+        pulse["cycle_number"] == cycles[0]
+    ]  # use the first pulse cycle as a case
+
+    if style == "cropped":
+        t, y1, y2 = structure_noah.remove_rest_profile_pulse(pulse_data=pulse)
+
+    elif style == "uncropped":
+        t, y1, y2 = (
+            pulse["test_time"].values,
+            pulse["current"].values,
+            pulse["voltage"].values,
+        )
+        t = t - t.min()
+
+    else:
+        raise ValueError(
+            f"style option must be either 'cropped' or 'uncropped', {style} is provided"
+        )
+
+    _, ax1 = plt.subplots(figsize=set_size())
+    ax1.plot(t, y1, "--", label="Current", color="black")
+    ax1.set_ylabel("Current (A)")
+    ax1.set_xlabel("Time (s)")
+
+    ax2 = ax1.twinx()
+    ax2.plot(t, y2, label="Voltage", color="black")
+    ax2.set_ylabel("Voltage (V)")
+
+    for ax, loc in zip([ax1, ax2], [0.4, 0.75]):
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(
+            handles, labels, loc="upper center", ncol=1, bbox_to_anchor=(loc, -0.2)
+        )
+
+        ax.spines["top"].set_visible(False)
+
+    plt.savefig(
+        f"{ROOT_DIR}/plots/pulse_project_v_i_twin_plot_{style}.svg",
+        bbox_inches="tight",
+    )
+
+    plt.show()
+
+
+def plot_relplot_pulse_profile(path_to_sample_cell: str) -> None:
+    pulse, _ = structure_noah.load_h5_columns_needed(path_to_cell=path_to_sample_cell)
+    cycles = pulse["cycle_number"].unique()
+    pulse = pulse[
+        pulse["cycle_number"] == cycles[0]
+    ]  # use the first pulse cycle as a case
+
+    time_diff = np.diff(pulse["test_time"].values)
+    odd_indices = np.where(time_diff >= time_diff.min() + 1)[0]
+
+    t = pulse["test_time"].values - pulse["test_time"].min()
+
+    data = {
+        "time": t,
+        "current": pulse["current"].values,
+        "voltage": pulse["voltage"].values,
+    }
+
+    df = pd.DataFrame(data)
+    thresholds = [0] + [t[i] for i in odd_indices if i % 2 != 0] + [float("inf")]
+    labels = [f"HPPC round {i}" for i in range(1, len(thresholds))]
+
+    df["time_group"] = pd.cut(
+        df["time"],
+        bins=thresholds,
+        labels=labels,
+        right=True,
+        include_lowest=True,
+    )
+
+    for p, l in {"current": ["a", "(A)"], "voltage": ["b", "(V)"]}.items():
+        fig = plt.figure(figsize=set_size(subplots=(3, 3)))
+
+        for i, r in enumerate(df["time_group"].unique()):
+            tmp_df = df[df["time_group"] == r]
+            ax = fig.add_subplot(3, 3, i + 1)
+            if i == 0:
+                ax.text(
+                    x=-0.2,
+                    y=1.3,
+                    s=r"\bf \Large {}".format(l[0]),
+                    transform=ax.transAxes,
+                    fontweight="bold",
+                    va="top",
+                )
+
+            ax.scatter(
+                tmp_df["time"],
+                tmp_df[p],
+                s=1,
+                color="red" if p == "current" else "blue",
+            )
+
+            if i not in [0, 3, 6]:
+                ax.spines[["top", "right", "left"]].set_visible(False)
+                ax.yaxis.set_visible(False)
+            else:
+                ax.spines[
+                    [
+                        "top",
+                        "right",
+                    ]
+                ].set_visible(False)
+                ax.set_ylim([data[p].min(), data[p].max() + 0.5])
+
+        fig.text(0.5, 0.0, "Time (s)", ha="center", va="center", fontsize=SMALL_SIZE)
+        fig.text(
+            0.0,
+            0.5,
+            f"{p.capitalize()} {l[1]}",
+            ha="center",
+            va="center",
+            rotation="vertical",
+            fontsize=SMALL_SIZE,
+        )
+
+        fig.tight_layout()
+        plt.savefig(
+            f"{ROOT_DIR}/plots/pulse_project_{p}_profile.pdf",
+            bbox_inches="tight",
+        )
+        plt.show()
+        plt.close()
+
+    return None
+
+
+def plot_target_graphical_abstract(structured_data: dict, sample_cell: str) -> None:
+
+    _, ax = plt.subplots(
+        figsize=set_size(fraction=1.0),
+    )
+
+    ax.plot(
+        structured_data[sample_cell]["summary"]["cycle"],
+        structured_data[sample_cell]["summary"]["filtered_capacity"],
+        color="black",
+        linewidth=2.0,
+    )
+
+    ax.set_xlabel("Cycle")
+    ax.set_ylabel("Capacity (Ah)")
+
+    ax.spines[
+        [
+            "top",
+            "right",
+        ]
+    ].set_visible(False)
+
+    eol = structured_data[sample_cell]["summary"]["end_of_life"]
+    cap_at_eol = 0.8 * structured_data[sample_cell]["summary"]["nominal_capacity"]
+
+    ax.axhline(
+        y=cap_at_eol,
+        linestyle="--",
+        color="black",
+    )
+
+    plt.savefig(
+        f"{ROOT_DIR}/plots/pulse_project_target_graphical_abstract.svg",
+        bbox_inches="tight",
+    )

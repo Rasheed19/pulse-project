@@ -3,24 +3,25 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 from sklearn.isotonic import IsotonicRegression
+from typing import Tuple, List
 from utils import generic_helper
 import importlib
 
 importlib.reload(generic_helper)
 
 
-def get_cell_cathode_group_nominal_capacity(path_to_cell: str) -> str:
+def get_cell_cathode_group_nominal_capacity(path_to_cell: str) -> Tuple[str, float]:
     """
     Get the cathode group to which a cell belong
     as well as the nominal capacity.
 
     Args:
     ----
-          path_to_cell: absolute path to the cell data
+          path_to_cell: absolute path to the cell's data
 
     Returns:
     -------
-            corresponding cathode group
+            corresponding cathode group- and nominal capacity
     """
     batdata = BatteryDataset.from_batdata_hdf(path_or_buf=path_to_cell)
 
@@ -30,7 +31,9 @@ def get_cell_cathode_group_nominal_capacity(path_to_cell: str) -> str:
     return dict(metadata["cathode"])["name"], metadata["nominal_capacity"]
 
 
-def load_h5_columns_needed(path_to_cell: str, return_all: bool = False) -> tuple:
+def load_h5_columns_needed(
+    path_to_cell: str, return_all: bool = False
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     This function load the .h5 data into pandas dataframe
     using the battery-data-toolkit library (https://pypi.org/project/battery-data-toolkit/)
@@ -85,7 +88,9 @@ def load_h5_columns_needed(path_to_cell: str, return_all: bool = False) -> tuple
     return raw_data, summary_data
 
 
-def remove_rest_profile_pulse(pulse_data: pd.DataFrame) -> tuple:
+def remove_rest_profile_from_pulse(
+    pulse_data: pd.DataFrame,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Here we remove rest time from the pulse data.
     """
@@ -106,7 +111,7 @@ def remove_rest_profile_pulse(pulse_data: pd.DataFrame) -> tuple:
     return time, np.array(current), np.array(voltage)
 
 
-def get_structured_data(path_to_files: list) -> dict:
+def get_structured_data(path_to_files: List[str]) -> dict:
     """
     Here, this function takes a list of paths to the refined
     data from (https://acdc.alcf.anl.gov/mdf/detail/camp_2023_v3.5/),
@@ -136,9 +141,8 @@ def get_structured_data(path_to_files: list) -> dict:
         "batch_B7A_cell_3",
     ]
     for path in path_to_files:
-        cell_name = (path.split("/")[-1]).split(".")[0]
+        cell_name = (path.split("/")[-1]).split(".")[0]  # extract the actual cell name from path
 
-        # get raw and summary data for this cell
         raw_data, summary_data = load_h5_columns_needed(
             path_to_cell=path, return_all=False
         )
@@ -146,7 +150,7 @@ def get_structured_data(path_to_files: list) -> dict:
         pulses = {}
 
         for cyc, group in raw_data.groupby("cycle_number"):
-            time, current, voltage = remove_rest_profile_pulse(pulse_data=group)
+            time, current, voltage = remove_rest_profile_from_pulse(pulse_data=group)
             pulses[cyc] = {"time": time, "current": current, "voltage": voltage}
 
         cycle = summary_data["cycle_number"].values
@@ -181,13 +185,12 @@ def get_structured_data(path_to_files: list) -> dict:
             "end_of_life": end_of_life,
         }
 
-        # update stuctured data
         structured_data[cell_name] = {"pulses": pulses, "summary": summary}
 
     return structured_data
 
 
-def get_unique_cathode_groups(structured_data: dict):
+def get_unique_cathode_groups(structured_data: dict) -> np.ndarray:
     cathode_groups = [
         structured_data[k]["summary"]["cathode_group"] for k in structured_data
     ]
