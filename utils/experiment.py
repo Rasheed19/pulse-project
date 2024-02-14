@@ -497,7 +497,7 @@ def effect_time_threshold(
     trans_func: Callable[[dict, int], tuple],
     scorer: str,
     *,
-    list_of_threshold: List[int] = None,
+    list_of_threshold: List[Union[int, tuple]] = None,
 ) -> Tuple[list, float, float]:
     threshold_score_cv = []
     threshold_std_cv = []

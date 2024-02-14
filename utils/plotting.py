@@ -811,7 +811,7 @@ def plot_time_threshold_effect(threshold_data_dict: dict) -> None:
             va="top",
         )
         ax.plot(
-            np.array(value[0]) * 20.0,
+            value[0],
             value[1] if key in ["rul", "eol"] else np.array(value[1]) * 100.0,
             color="red",
             marker="o",
@@ -972,7 +972,7 @@ def plot_analysis_graphical_abstract(
             ax.scatter(
                 prediction_data_list[0]["test"]["actual"],
                 prediction_data_list[0]["test"]["prediction"],
-                color="black",
+                color="red",
                 s=20,
                 marker="o",
                 label="Test",
@@ -1004,7 +1004,7 @@ def plot_analysis_graphical_abstract(
             ax.bar(
                 value[0]["features"][-10:][::-1],
                 value[0]["importance"][-10:][::-1],
-                color="black",
+                color="red",
                 ec="black",
             )
             ax.tick_params(axis="x", rotation=90)
@@ -1099,7 +1099,7 @@ def plot_full_pulse_profile(
     ]  # use the first pulse cycle as a case
 
     if style == "cropped":
-        t, y1, y2 = structure_noah.remove_rest_profile_pulse(pulse_data=pulse)
+        t, y1, y2 = structure_noah.remove_rest_profile_from_pulse(pulse_data=pulse)
 
     elif style == "uncropped":
         t, y1, y2 = (
@@ -1115,12 +1115,12 @@ def plot_full_pulse_profile(
         )
 
     _, ax1 = plt.subplots(figsize=set_size())
-    ax1.plot(t, y1, "--", label="Current", color="black")
+    ax1.plot(t, y1, "--", label="Current", color="red")
     ax1.set_ylabel("Current (A)")
     ax1.set_xlabel("Time (s)")
 
     ax2 = ax1.twinx()
-    ax2.plot(t, y2, label="Voltage", color="black")
+    ax2.plot(t, y2, label="Voltage", color="blue")
     ax2.set_ylabel("Voltage (V)")
 
     for ax, loc in zip([ax1, ax2], [0.4, 0.75]):
@@ -1235,7 +1235,7 @@ def plot_target_graphical_abstract(structured_data: dict, sample_cell: str) -> N
     ax.plot(
         structured_data[sample_cell]["summary"]["cycle"],
         structured_data[sample_cell]["summary"]["filtered_capacity"],
-        color="black",
+        color="red",
         linewidth=2.0,
     )
 
