@@ -4,6 +4,7 @@ import scipy as sp
 import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 from typing import Tuple, List
+from utils.definitions import ROOT_DIR
 from utils import generic_helper
 import importlib
 
@@ -141,7 +142,9 @@ def get_structured_data(path_to_files: List[str]) -> dict:
         "batch_B7A_cell_3",
     ]
     for path in path_to_files:
-        cell_name = (path.split("/")[-1]).split(".")[0]  # extract the actual cell name from path
+        cell_name = (path.split("/")[-1]).split(".")[
+            0
+        ]  # extract the actual cell name from path
 
         raw_data, summary_data = load_h5_columns_needed(
             path_to_cell=path, return_all=False
@@ -195,3 +198,13 @@ def get_unique_cathode_groups(structured_data: dict) -> np.ndarray:
         structured_data[k]["summary"]["cathode_group"] for k in structured_data
     ]
     return np.unique(cathode_groups)
+
+
+def save_cells_as_csv(cells: List[str], save_name: str) -> pd.DataFrame:
+
+    csv = pd.DataFrame()
+    csv[save_name] = cells
+
+    csv.to_csv(f"{ROOT_DIR}/train_test_cells/{save_name}.csv")
+
+    return csv

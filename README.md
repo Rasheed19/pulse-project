@@ -5,13 +5,14 @@ This repository contains the codes for all the experiments performed in the pape
 1. `config` contains the model configuration file
 1. `experiments` contains the Jupyter notebooks of all experiments in sequential order. They must be run in that order especially those of 01 and 02
 1. `utils` contains the custom modules for training model and data exploration
+1. `train_test_cells` contains the csv files of the names of the cells in the train and test splits used in this study (there is an option to use this for reproducibilty)
 
 ## Set up for running locally
 1. Clone the repository by running
     ```
     git clone https://github.com/Rasheed19/pulse-project.git
     ```
-1. Navigate to the root folder, i.e., `pulse-project` and create a python virtual environment by running
+1. Navigate to the root folder, i.e., `pulse-project` and create a python virtual environment (note that Python 3.10 was used in this project) by running
     ```
     python3.10 -m venv .venv
     ``` 

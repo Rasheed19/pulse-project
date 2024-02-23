@@ -17,9 +17,9 @@ importlib.reload(structure_noah)
 
 
 # configure plotting style
-SMALL_SIZE = 8
-MEDIUM_SIZE = 10
-BIGGER_SIZE = 11
+SMALL_SIZE = 8  # 12
+MEDIUM_SIZE = 10  # 14
+BIGGER_SIZE = 11  # 16
 
 font = {"family": "serif", "serif": ["Times"], "size": MEDIUM_SIZE}
 
@@ -585,7 +585,11 @@ def plot_roc_curve(y_true: np.ndarray, y_score: np.ndarray) -> None:
 
 
 def plot_target_transform_comparison(
-    data: np.ndarray, bins: int, x_label: str, save_name: str
+    data: np.ndarray,
+    bins: int,
+    x_label: str,
+    save_name: str,
+    fig_labels: List[str] = None,
 ) -> None:
     data_transformed = quantile_transform(
         X=data.reshape(-1, 1),
@@ -597,7 +601,9 @@ def plot_target_transform_comparison(
         zip([x_label, f"Transformed {x_label}"], [data, data_transformed])
     )
     fig = plt.figure(figsize=set_size(subplots=(1, 2)))
-    fig_labels = ["a", "b"]
+
+    if fig_labels is None:
+        fig_labels = ["a", "b"]
 
     for i, key in enumerate(label_data_dict):
         ax = fig.add_subplot(1, 2, i + 1)
@@ -694,7 +700,7 @@ def plot_cunfusion_matrix_roc_curve(
             fpr, tpr, _ = roc_curve(y_true, y_score)
             ax.plot(fpr, tpr, "r-", label="XGBoost")
             ax.plot([0, 1], [0, 1], "k--", label="Chance level")
-            ax.set_xlabel("False negative rate")
+            ax.set_xlabel("False positive rate")
             ax.set_ylabel("True positive rate")
             ax.spines[["top", "right"]].set_visible(False)
 
@@ -708,9 +714,13 @@ def plot_cunfusion_matrix_roc_curve(
     return None
 
 
-def plot_feature_importance(analysis_result: dict, threshold: int, tag: str) -> None:
+def plot_feature_importance(
+    analysis_result: dict, threshold: int, tag: str, fig_labels: List[str] = None
+) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 3)))
-    fig_labels = ["a", "b", "c"]
+
+    if fig_labels is None:
+        fig_labels = ["a", "b", "c"]
 
     for i, value in enumerate(analysis_result.values()):
         ax = fig.add_subplot(1, 3, i + 1)
@@ -817,6 +827,15 @@ def plot_time_threshold_effect(threshold_data_dict: dict) -> None:
             marker="o",
             label="Mean",
         )
+        ax.axvline(x=120, linestyle="--", color="black")
+        ax.text(
+            x=0.2,
+            y=1.1,
+            s=r"$t$ = 120 s, 40\% SOC",
+            transform=ax.transAxes,
+            va="top",
+        )
+        ax.set_yticks(ticks=ax.get_yticks())  # to have more granulality on the y-axis
 
         if key in ["rul", "eol"]:
             ax.set_ylabel("MAE (cycles)")
@@ -824,7 +843,7 @@ def plot_time_threshold_effect(threshold_data_dict: dict) -> None:
         elif key == "classification":
             ax.set_ylabel(r"$F_1$-score (\%)")
 
-        ax.set_xlabel("Time threshold (sec)")
+        ax.set_xlabel("Time threshold (s)")
         ax.spines[["top", "right"]].set_visible(False)
 
     plt.savefig(
@@ -882,8 +901,8 @@ def plot_feature_similarity(data: dict, tag: str, fig_label: str) -> None:
         va="top",
     )
 
-    ax.set_xlabel("Time threshold (sec)")
-    ax.set_ylabel("Time threshold (sec)")
+    ax.set_xlabel("Time threshold (s)")
+    ax.set_ylabel("Time threshold (s)")
 
     plt.yticks(rotation=0)
     plt.savefig(
@@ -892,9 +911,13 @@ def plot_feature_similarity(data: dict, tag: str, fig_label: str) -> None:
     )
 
 
-def plot_combined_feature_similarity(data_list: List[dict]) -> None:
+def plot_combined_feature_similarity(
+    data_list: List[dict], fig_labels: List[str] = None
+) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 3)))
-    fig_labels = ["a", "b", "c"]
+
+    if fig_labels is None:
+        fig_labels = ["a", "b", "c"]
 
     for i, data in enumerate(data_list):
         similarity_scores = []
@@ -915,7 +938,7 @@ def plot_combined_feature_similarity(data_list: List[dict]) -> None:
         ax = fig.add_subplot(1, 3, i + 1)
         ax.text(
             x=-0.15,
-            y=1.2,
+            y=1.3,
             s=r"\bf \Large {}".format(fig_labels[i]),
             transform=ax.transAxes,
             fontweight="bold",
@@ -946,9 +969,9 @@ def plot_combined_feature_similarity(data_list: List[dict]) -> None:
             ax.set_yticklabels([])
 
         if i == 0:
-            ax.set_ylabel("Time threshold (sec)")
+            ax.set_ylabel("Time threshold (s)")
 
-        ax.set_xlabel("Time threshold (sec)")
+        ax.set_xlabel("Time threshold (s)")
 
     plt.savefig(
         fname=f"{ROOT_DIR}/plots/pulse_project_combined_similarity_scores.pdf",
@@ -1019,7 +1042,11 @@ def plot_analysis_graphical_abstract(
 
 
 def strip_plot_firstpulse_cycle_life(
-    structured_data_with_pulse: dict, *, pulse_cycle: bool, ylabel: str
+    structured_data_with_pulse: dict,
+    *,
+    pulse_cycle: bool,
+    ylabel: str,
+    fig_label: str = None,
 ) -> None:
     cathode_groups = [
         " Li1.35Ni0.33Mn0.67O2.35",
@@ -1071,6 +1098,15 @@ def strip_plot_firstpulse_cycle_life(
         linewidth=1,
     )
 
+    if fig_label is not None:
+        ax.text(
+            x=-0.3,
+            y=1.1,
+            s=r"\bf \Large {}".format(fig_label),
+            transform=ax.transAxes,
+            fontweight="bold",
+            va="top",
+        )
     ax.set_yticks(ticks=cathode_groups, labels=mod_cathode_groups)
     ax.spines[
         [
@@ -1090,13 +1126,23 @@ def strip_plot_firstpulse_cycle_life(
 
 def plot_full_pulse_profile(
     path_to_sample_cell: str,
+    pulse_cycle: int,
     style: str = "cropped",
 ) -> None:
-    pulse, _ = structure_noah.load_h5_columns_needed(path_to_cell=path_to_sample_cell)
-    cycles = pulse["cycle_number"].unique()
+    if style not in ["cropped", "uncropped"]:
+        raise ValueError(
+            f"style option must be either 'cropped' or 'uncropped', {style} is provided"
+        )
+
+    pulse, _ = structure_noah.load_h5_columns_needed(
+        path_to_cell=path_to_sample_cell,
+        return_all=False if style == "cropped" else True,
+    )
+
     pulse = pulse[
-        pulse["cycle_number"] == cycles[0]
-    ]  # use the first pulse cycle as a case
+        pulse["cycle_number"]
+        == pulse_cycle  # pulse cycle must be valid to have the desird plot
+    ]
 
     if style == "cropped":
         t, y1, y2 = structure_noah.remove_rest_profile_from_pulse(pulse_data=pulse)
@@ -1109,19 +1155,21 @@ def plot_full_pulse_profile(
         )
         t = t - t.min()
 
-    else:
-        raise ValueError(
-            f"style option must be either 'cropped' or 'uncropped', {style} is provided"
-        )
+    # else:
+    #     raise ValueError(
+    #         f"style option must be either 'cropped' or 'uncropped', {style} is provided"
+    #     )
 
     _, ax1 = plt.subplots(figsize=set_size())
-    ax1.plot(t, y1, "--", label="Current", color="red")
+    ax1.plot(t, y1, "-.", label="Current", color="red")
     ax1.set_ylabel("Current (A)")
     ax1.set_xlabel("Time (s)")
+    # ax1.set_yticks(ticks=ax1.get_yticks())
 
     ax2 = ax1.twinx()
     ax2.plot(t, y2, label="Voltage", color="blue")
     ax2.set_ylabel("Voltage (V)")
+    # ax2.set_yticks(ticks=ax2.get_yticks())
 
     for ax, loc in zip([ax1, ax2], [0.4, 0.75]):
         handles, labels = ax.get_legend_handles_labels()

@@ -7,7 +7,7 @@ setup(
     author_email="R.O.Ibraheem@sms.ed.ac.uk",
     maintainer="Rasheed Ibraheem",
     maintainer_email="R.O.Ibraheem@sms.ed.ac.uk",
-    description="Prediction of RUL of Li-ion cells from one single HPPC test",
+    description="Path Signature-Based Life Prognostics of Li-ion Battery Using Pulse Test Data",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/Rasheed19/pulse-project.git",
@@ -20,5 +20,5 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=find_packages(),
-    python_requires=">=3.10"
+    python_requires=">=3.10",
 )
