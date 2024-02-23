@@ -1,5 +1,5 @@
 # pulse-project
-This repository contains the codes for all the experiments performed in the paper Prediction of RUL of Li-ion cells from a single HPPC test.
+This repository contains the codes for all the experiments performed in the paper Path Signature-Based Life Prognostics of Li-ion Battery Using Pulse Test Data.
 
 ## Folder analysis
 1. `config` contains the model configuration file
