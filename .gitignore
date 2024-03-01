@@ -161,6 +161,9 @@ processor/
 noah_raw_data/
 literature/
 
+# Ignore pulse project environment
+pulsevenv/
+
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
