@@ -176,8 +176,11 @@ def get_structured_data(path_to_files: List[str]) -> dict:
         filtered_capacity = isotonic_reg.fit_transform(cycle, filtered_capacity)
 
         nominal_capacity = np.median(filtered_capacity[:10])
-        end_of_life_bool = capacity >= 0.8 * nominal_capacity
-        end_of_life = len(capacity[end_of_life_bool])
+        end_of_life_bool = filtered_capacity >= 0.8 * nominal_capacity
+        end_of_life = cycle[end_of_life_bool][
+            -1
+        ]  # this uses an assumption that capacity is monotone decreasing;
+        # this has been achieved via isotonic regression
 
         summary = {
             "cycle": cycle,
