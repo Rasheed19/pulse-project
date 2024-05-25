@@ -1,39 +1,18 @@
-import importlib
 import numpy as np
 import random
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
-from typing import Callable, Tuple, Union
-from utils import generic_helper
 
-importlib.reload(generic_helper)
+from .generic_helper import get_path_signatures
 
 
 def get_data_for_eol_prediction(
     structured_data: dict,
     signature_depth: int,
-    threshold: float,
-    *,
-    with_cathode_groups: bool = False
-) -> Union[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
-    """
-    This function creates features (for end of life
-    prediction) from a structured data
-    containing pulse time, current, and voltage.
-
-    args:
-    ----
-        structured_data: a dictionary containing pulse and summary data
-        signature_depth: depth of path signature
-        threshold:       time threshold for the current and voltage profiles
-        randomness:      whether to use a random pulse testing for feature extraction
-        with_cathode_groups: either to return an array of cathode groups alongside with
-                             the main target
-    returns:
-    -------
-            numpy nd array of extracted features.
-    """
+    threshold: float | tuple[float, float],
+    with_cathode_groups: bool = False,
+) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray]:
 
     extracted_features = []
     extracted_eol = []
@@ -44,7 +23,7 @@ def get_data_for_eol_prediction(
         pulse = pulse_list[0]
 
         extracted_features.append(
-            generic_helper.get_path_signatures(
+            get_path_signatures(
                 time=value["pulses"][pulse]["time"],
                 current=value["pulses"][pulse]["current"],
                 voltage=value["pulses"][pulse]["voltage"],
@@ -70,10 +49,9 @@ def get_data_for_eol_prediction(
 def get_data_for_rul_prediction(
     structured_data: dict,
     signature_depth: int,
-    threshold: float,
-    *,
-    with_cathode_groups: bool = False
-) -> Union[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    threshold: float | tuple[float, float],
+    with_cathode_groups: bool = False,
+) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray]:
     X = []
     y = []
     y_cathode_groups = []
@@ -82,7 +60,7 @@ def get_data_for_rul_prediction(
         for pulse in value["pulses"]:
             if pulse < value["summary"]["end_of_life"]:
                 X.append(
-                    generic_helper.get_path_signatures(
+                    get_path_signatures(
                         time=value["pulses"][pulse]["time"],
                         current=value["pulses"][pulse]["current"],
                         voltage=value["pulses"][pulse]["voltage"],
@@ -116,14 +94,16 @@ def get_data_for_rul_prediction(
 
 
 def get_data_for_classification(
-    structured_data: dict, signature_depth: int, threshold: float
-) -> Tuple[np.ndarray, np.ndarray]:
+    structured_data: dict,
+    signature_depth: int,
+    threshold: float | tuple[float, float],
+) -> tuple[np.ndarray, np.ndarray]:
     X = []
     y = []
 
     for value in structured_data.values():
         for pulse in value["pulses"]:
-            temp_features = generic_helper.get_path_signatures(
+            temp_features = get_path_signatures(
                 time=value["pulses"][pulse]["time"],
                 current=value["pulses"][pulse]["current"],
                 voltage=value["pulses"][pulse]["voltage"],
@@ -152,42 +132,5 @@ def get_data_for_classification(
     return X[shuffled_indices], y[shuffled_indices]
 
 
-def processing_pipeline() -> Pipeline:
+def inputer_scaler_pipeline() -> Pipeline:
     return Pipeline([("imputer", SimpleImputer()), ("scaler", StandardScaler())])
-
-
-class FeaturesTargetExtractor:
-    """
-    This class aims to transform raw data to features
-    and targets that can be used for prediction.
-    """
-
-    def __init__(
-        self,
-        signature_depth: int,
-        threshold: float,
-        trans_func: Callable[[dict, int], tuple],
-    ):
-        self.signature_depth = signature_depth
-        self.threshold = threshold
-        self.trans_func = trans_func
-        self.imputer_scaler_pipeline = processing_pipeline()
-
-    def fit_transform(self, structured_data: dict):
-        X, y = self.trans_func(
-            structured_data=structured_data,
-            signature_depth=self.signature_depth,
-            threshold=self.threshold,
-        )
-        X = self.imputer_scaler_pipeline.fit_transform(X)
-
-        return X, y
-
-    def transform(self, structured_data: dict):
-        X, y = self.trans_func(
-            structured_data=structured_data,
-            signature_depth=self.signature_depth,
-            threshold=self.threshold,
-        )
-
-        return self.imputer_scaler_pipeline.transform(X), y

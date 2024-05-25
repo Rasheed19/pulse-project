@@ -1,45 +1,22 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib import rc
 import numpy as np
 import pandas as pd
-from typing import Callable, Tuple, Any, Union, List
-from utils.definitions import ROOT_DIR
-from utils import experiment, generic_helper, structure_noah
-import importlib
+from typing import Callable, Any
 import itertools
 from sklearn.metrics import confusion_matrix, roc_curve
 from sklearn.preprocessing import quantile_transform
 
-importlib.reload(experiment)
-importlib.reload(generic_helper)
-importlib.reload(structure_noah)
+from .definitions import ROOT_DIR
+from .structure_noah import load_h5_columns_needed, remove_rest_profile_from_pulse
+from .generic_helper import get_rcparams, jaccard_similarity
 
-
-# configure plotting style
-SMALL_SIZE = 8  # 12
-MEDIUM_SIZE = 10  # 14
-BIGGER_SIZE = 11  # 16
-
-font = {"family": "serif", "serif": ["Times"], "size": MEDIUM_SIZE}
-
-rc("axes", titlesize=MEDIUM_SIZE)  # fontsize of the axes title
-rc("axes", labelsize=SMALL_SIZE)  # fontsize of the x and y labels
-rc("xtick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
-rc("ytick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
-rc("legend", fontsize=SMALL_SIZE)  # legend fontsize
-rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
-
-rc("font", **font)
-rc("text", usetex=True)
-
-# define text width from overleaf
-TEXT_WIDTH = 360.0
+plt.rcParams.update(get_rcparams())
 
 
 def set_size(
-    width: float = TEXT_WIDTH, fraction: float = 1.0, subplots: tuple = (1, 1)
-) -> Tuple[float, float]:
+    width: float = 360.0, fraction: float = 1.0, subplots: tuple = (1, 1)
+) -> tuple[float, float]:
     """
     Set figure dimensions to avoid scaling in LaTeX.
 
@@ -96,13 +73,13 @@ def axis_to_fig(axis: Any) -> Callable[[tuple], Any]:
 
     fig = axis.figure
 
-    def transform(coord: Union[tuple, list]):
+    def transform(coord: tuple | list):
         return fig.transFigure.inverted().transform(axis.transAxes.transform(coord))
 
     return transform
 
 
-def add_sub_axes(axis: Any, rect: Union[tuple, list]) -> Any:
+def add_sub_axes(axis: Any, rect: tuple | list) -> Any:
     """
     Adds sub-axis to existing axis object.
 
@@ -124,7 +101,7 @@ def add_sub_axes(axis: Any, rect: Union[tuple, list]) -> Any:
     return fig.add_axes([figleft, figbottom, figwidth, figheight])
 
 
-def parity_plot(prediction_data_list: List[dict], tag: str) -> None:
+def parity_plot(prediction_data_list: list[dict], tag: str) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 2)))
     fig_labels = ["a", "b"]
     marker_style = dict(
@@ -266,7 +243,6 @@ def plot_pulse_voltage_current(
 
     plt.savefig(f"{ROOT_DIR}/plots/pulse_project_vc_plot.pdf", bbox_inches="tight")
 
-    plt.show()
     return None
 
 
@@ -411,7 +387,6 @@ def plot_num_cells_first_pulse_dist(structured_data_with_pulse: dict) -> None:
         f"{ROOT_DIR}/plots/pulse_project_cells_per_group_1st_pulse_dist.pdf",
         bbox_inches="tight",
     )
-    plt.show()
 
     return None
 
@@ -450,7 +425,7 @@ def plot_sample_discharge_capacity(structured_data_with_pulse: dict, sample_cell
     return None
 
 
-def plot_filtered_capacity(sample_cells: List[str], structured_data: dict) -> None:
+def plot_filtered_capacity(sample_cells: list[str], structured_data: dict) -> None:
     fig = plt.figure(figsize=set_size(subplots=(3, 3)))
     fig_labels = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
 
@@ -511,7 +486,6 @@ def plot_filtered_capacity(sample_cells: List[str], structured_data: dict) -> No
         f"{ROOT_DIR}/plots/pulse_project_sample_filtered_capacity.pdf",
         bbox_inches="tight",
     )
-    plt.show()
 
     return None
 
@@ -519,7 +493,7 @@ def plot_filtered_capacity(sample_cells: List[str], structured_data: dict) -> No
 def plot_confusion_matrix(
     true_labels: np.ndarray,
     predicted_labels: np.ndarray,
-    classes: List[str],
+    classes: list[str],
     cmap: Any = plt.cm.Blues,
 ) -> None:
     cm = confusion_matrix(true_labels, predicted_labels)
@@ -562,7 +536,6 @@ def plot_confusion_matrix(
     plt.savefig(
         f"{ROOT_DIR}/plots/pulse_project_confusion_matrix.pdf", bbox_inches="tight"
     )
-    plt.show()
 
     return None
 
@@ -579,7 +552,6 @@ def plot_roc_curve(y_true: np.ndarray, y_score: np.ndarray) -> None:
     ax.legend()
 
     plt.savefig(f"{ROOT_DIR}/plots/pulse_project_roc_curve.pdf", bbox_inches="tight")
-    plt.show()
 
     return None
 
@@ -589,7 +561,7 @@ def plot_target_transform_comparison(
     bins: int,
     x_label: str,
     save_name: str,
-    fig_labels: List[str] = None,
+    fig_labels: list[str] = None,
 ) -> None:
     data_transformed = quantile_transform(
         X=data.reshape(-1, 1),
@@ -630,7 +602,6 @@ def plot_target_transform_comparison(
         ].set_visible(False)
 
     plt.savefig(f"{ROOT_DIR}/plots/pulse_project_{save_name}.pdf", bbox_inches="tight")
-    plt.show()
 
     return None
 
@@ -639,7 +610,7 @@ def plot_cunfusion_matrix_roc_curve(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     y_score: np.ndarray,
-    classes: List[str],
+    classes: list[str],
     cmap: Any = plt.cm.Reds,
 ) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 2)))
@@ -709,13 +680,12 @@ def plot_cunfusion_matrix_roc_curve(
     plt.savefig(
         f"{ROOT_DIR}/plots/pulse_project_roc_confusion_matrix.pdf", bbox_inches="tight"
     )
-    plt.show()
 
     return None
 
 
 def plot_feature_importance(
-    analysis_result: dict, threshold: int, tag: str, fig_labels: List[str] = None
+    analysis_result: dict, threshold: int, tag: str, fig_labels: list[str] = None
 ) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 3)))
 
@@ -750,7 +720,6 @@ def plot_feature_importance(
             ax.set_ylabel("Feature importance")
 
     plt.savefig(fname=f"{ROOT_DIR}/plots/pulse_project_{tag}.pdf", bbox_inches="tight")
-    plt.show()
 
     return None
 
@@ -773,7 +742,7 @@ def bifurcation_discriminant(
     }
 
 
-def bifurcation_diagram(bifurcation_list: List[dict]) -> None:
+def bifurcation_diagram(bifurcation_list: list[dict]) -> None:
     _, ax = plt.subplots(figsize=set_size())
 
     for i, bl in enumerate(bifurcation_list):
@@ -861,7 +830,7 @@ def plot_feature_similarity(data: dict, tag: str, fig_label: str) -> None:
         temp_sim_score = []
         for t2 in data.keys():
             temp_sim_score.append(
-                generic_helper.jaccard_similarity(data[t1].tolist(), data[t2].tolist())
+                jaccard_similarity(data[t1].tolist(), data[t2].tolist())
             )
 
         similarity_scores.append(temp_sim_score)
@@ -912,7 +881,7 @@ def plot_feature_similarity(data: dict, tag: str, fig_label: str) -> None:
 
 
 def plot_combined_feature_similarity(
-    data_list: List[dict], fig_labels: List[str] = None
+    data_list: list[dict], fig_labels: list[str] = None
 ) -> None:
     fig = plt.figure(figsize=set_size(subplots=(1, 3)))
 
@@ -926,9 +895,7 @@ def plot_combined_feature_similarity(
             temp_sim_score = []
             for t2 in data.keys():
                 temp_sim_score.append(
-                    generic_helper.jaccard_similarity(
-                        data[t1].tolist(), data[t2].tolist()
-                    )
+                    jaccard_similarity(data[t1].tolist(), data[t2].tolist())
                 )
 
             similarity_scores.append(temp_sim_score)
@@ -1134,7 +1101,7 @@ def plot_full_pulse_profile(
             f"style option must be either 'cropped' or 'uncropped', {style} is provided"
         )
 
-    pulse, _ = structure_noah.load_h5_columns_needed(
+    pulse, _ = load_h5_columns_needed(
         path_to_cell=path_to_sample_cell,
         return_all=False if style == "cropped" else True,
     )
@@ -1145,7 +1112,7 @@ def plot_full_pulse_profile(
     ]
 
     if style == "cropped":
-        t, y1, y2 = structure_noah.remove_rest_profile_from_pulse(pulse_data=pulse)
+        t, y1, y2 = remove_rest_profile_from_pulse(pulse_data=pulse)
 
     elif style == "uncropped":
         t, y1, y2 = (
@@ -1184,11 +1151,11 @@ def plot_full_pulse_profile(
         bbox_inches="tight",
     )
 
-    plt.show()
+    return None
 
 
 def plot_relplot_pulse_profile(path_to_sample_cell: str) -> None:
-    pulse, _ = structure_noah.load_h5_columns_needed(path_to_cell=path_to_sample_cell)
+    pulse, _ = load_h5_columns_needed(path_to_cell=path_to_sample_cell)
     cycles = pulse["cycle_number"].unique()
     pulse = pulse[
         pulse["cycle_number"] == cycles[0]
@@ -1252,7 +1219,7 @@ def plot_relplot_pulse_profile(path_to_sample_cell: str) -> None:
                 ].set_visible(False)
                 ax.set_ylim([data[p].min(), data[p].max() + 0.5])
 
-        fig.text(0.5, 0.0, "Time (s)", ha="center", va="center", fontsize=SMALL_SIZE)
+        fig.text(0.5, 0.0, "Time (s)", ha="center", va="center")
         fig.text(
             0.0,
             0.5,
@@ -1260,7 +1227,6 @@ def plot_relplot_pulse_profile(path_to_sample_cell: str) -> None:
             ha="center",
             va="center",
             rotation="vertical",
-            fontsize=SMALL_SIZE,
         )
 
         fig.tight_layout()
@@ -1268,7 +1234,6 @@ def plot_relplot_pulse_profile(path_to_sample_cell: str) -> None:
             f"{ROOT_DIR}/plots/pulse_project_{p}_profile.pdf",
             bbox_inches="tight",
         )
-        plt.show()
         plt.close()
 
     return None
@@ -1297,7 +1262,6 @@ def plot_target_graphical_abstract(structured_data: dict, sample_cell: str) -> N
         ]
     ].set_visible(False)
 
-    eol = structured_data[sample_cell]["summary"]["end_of_life"]
     cap_at_eol = 0.8 * structured_data[sample_cell]["summary"]["nominal_capacity"]
 
     ax.axhline(
@@ -1310,3 +1274,5 @@ def plot_target_graphical_abstract(structured_data: dict, sample_cell: str) -> N
         f"{ROOT_DIR}/plots/pulse_project_target_graphical_abstract.svg",
         bbox_inches="tight",
     )
+
+    return None

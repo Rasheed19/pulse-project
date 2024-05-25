@@ -3,15 +3,11 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 from sklearn.isotonic import IsotonicRegression
-from typing import Tuple, List
-from utils.definitions import ROOT_DIR
-from utils import generic_helper
-import importlib
 
-importlib.reload(generic_helper)
+from .definitions import ROOT_DIR
 
 
-def get_cell_cathode_group_nominal_capacity(path_to_cell: str) -> Tuple[str, float]:
+def get_cell_cathode_group_nominal_capacity(path_to_cell: str) -> tuple[str, float]:
     """
     Get the cathode group to which a cell belong
     as well as the nominal capacity.
@@ -34,7 +30,7 @@ def get_cell_cathode_group_nominal_capacity(path_to_cell: str) -> Tuple[str, flo
 
 def load_h5_columns_needed(
     path_to_cell: str, return_all: bool = False
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     This function load the .h5 data into pandas dataframe
     using the battery-data-toolkit library (https://pypi.org/project/battery-data-toolkit/)
@@ -91,7 +87,7 @@ def load_h5_columns_needed(
 
 def remove_rest_profile_from_pulse(
     pulse_data: pd.DataFrame,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Here we remove rest time from the pulse data.
     """
@@ -112,7 +108,7 @@ def remove_rest_profile_from_pulse(
     return time, np.array(current), np.array(voltage)
 
 
-def get_structured_data(path_to_files: List[str]) -> dict:
+def get_structured_data(path_to_files: list[str]) -> dict:
     """
     Here, this function takes a list of paths to the refined
     data from (https://acdc.alcf.anl.gov/mdf/detail/camp_2023_v3.5/),
@@ -176,11 +172,10 @@ def get_structured_data(path_to_files: List[str]) -> dict:
         filtered_capacity = isotonic_reg.fit_transform(cycle, filtered_capacity)
 
         nominal_capacity = np.median(filtered_capacity[:10])
-        end_of_life_bool = filtered_capacity >= 0.8 * nominal_capacity
-        end_of_life = cycle[end_of_life_bool][
-            -1
-        ]  # this uses an assumption that capacity is monotone decreasing;
-        # this has been achieved via isotonic regression
+        end_of_life_bool = capacity >= 0.8 * nominal_capacity
+        end_of_life = len(capacity[end_of_life_bool])
+
+        # TODO: implement the above in survival analysis project
 
         summary = {
             "cycle": cycle,
@@ -203,7 +198,7 @@ def get_unique_cathode_groups(structured_data: dict) -> np.ndarray:
     return np.unique(cathode_groups)
 
 
-def save_cells_as_csv(cells: List[str], save_name: str) -> pd.DataFrame:
+def save_cells_as_csv(cells: list[str], save_name: str) -> pd.DataFrame:
 
     csv = pd.DataFrame()
     csv[save_name] = cells
