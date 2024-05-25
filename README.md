@@ -42,11 +42,10 @@ This repository contains the codes for all the model training and experiments pe
     ```
     python run_train.py --not-loaded --model-type eol
     ```
-To see all the arguments or options available to an entry point, e.g., for training pipeline entry point run:
+    To see all the arguments or options available to an entry point, e.g., for training pipeline entry point run:
     ```
     python run_train.py --help
     ```
-
 1. When you are done experimenting, deactivate the virtual environment by running
     ```
     deactivate
