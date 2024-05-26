@@ -175,8 +175,6 @@ def get_structured_data(path_to_files: list[str]) -> dict:
         end_of_life_bool = capacity >= 0.8 * nominal_capacity
         end_of_life = len(capacity[end_of_life_bool])
 
-        # TODO: implement the above in survival analysis project
-
         summary = {
             "cycle": cycle,
             "capacity": capacity,

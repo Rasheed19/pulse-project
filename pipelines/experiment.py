@@ -38,7 +38,13 @@ def threshold_effect_pipeline(
 
     logger.info("Running experiment...")
     if threshold_type == "interval":
-        threshold_list = [(0, 40), (40, 80), (80, 120)]
+        threshold_list = [
+            (0, 20),
+            (20, 40),
+            (40, 60),
+            (60, 80),
+            (80, 100),
+        ]  # [(0, 40), (40, 80), (80, 120)] for the 20% difference in SOC
         for threshold in threshold_list:
             # preprocess
             preprocessor = data_preprocessor(
@@ -57,8 +63,18 @@ def threshold_effect_pipeline(
                 model_type=model_type,
                 scorer=scorer,
             )
+            best_score = (
+                abs(model_trainer_output.best_score) * 100.0  # change to %
+                if model_type == "classification"
+                else abs(model_trainer_output.best_score)
+            )
+            best_std = (
+                model_trainer_output.best_std * 100.0  # change to %
+                if model_type == "classification"
+                else model_trainer_output.best_std
+            )
             print(
-                f"threshold: {threshold}, cv score: {abs(abs(model_trainer_output.best_score)):.2f}, cv std: {model_trainer_output.best_std:.2f}"
+                f"threshold: {threshold}, cv score: {best_score:.2f}, cv std: {best_std:.2f}"
             )
 
         return None
