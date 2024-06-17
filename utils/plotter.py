@@ -15,7 +15,7 @@ plt.rcParams.update(get_rcparams())
 
 
 def set_size(
-    width: float = 360.0, fraction: float = 1.0, subplots: tuple = (1, 1)
+    width: float | str = 360.0, fraction: float = 1.0, subplots: tuple = (1, 1)
 ) -> tuple[float, float]:
     """
     Set figure dimensions to avoid scaling in LaTeX.
