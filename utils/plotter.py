@@ -1108,7 +1108,7 @@ def plot_full_pulse_profile(
 
     pulse = pulse[
         pulse["cycle_number"]
-        == pulse_cycle  # pulse cycle must be valid to have the desird plot
+        == pulse_cycle  # pulse cycle must be valid to have the desired plot
     ]
 
     if style == "cropped":
