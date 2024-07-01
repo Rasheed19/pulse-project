@@ -32,7 +32,7 @@ def data_preprocessor(
         rul=get_data_for_rul_prediction,
         classification=get_data_for_classification,
     )
-    if model_type not in model_type:
+    if model_type not in model_types:
         raise ValueError(
             f"""Model type must be one of 'eol', 'rul' or 'classification'
             but {model_type} is given."""
