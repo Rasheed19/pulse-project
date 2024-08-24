@@ -1,8 +1,8 @@
 import click
 
 from pipelines import threshold_effect_pipeline
-from utils.generic_helper import load_yaml_file
 from utils.definitions import ROOT_DIR
+from utils.generic_helper import load_yaml_file
 
 
 @click.command(

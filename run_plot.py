@@ -10,7 +10,6 @@ from pipelines import plot_pipeline
     """
 )
 def main() -> None:
-
     plot_pipeline()
 
 
