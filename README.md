@@ -25,10 +25,10 @@ This repository contains the codes for all the model training and experiments pe
 
 ## Usage
 After setting up the project environment as instructed above, start running the provided entry points (`run_train.py`, `run_experiment.py`, `run_val.py`, and `run_plot.py` for the model training, experiment, leave-one-group-out cross-validation, and plotting pipelines respectively) with their respective arguments as CLI. For instance to train the end of life (eol) model using the proposed train-test cell splits given that the data has not been loaded to a Python dictionary, run:
-    ```
-    python run_train.py --not-loaded --model-type eol
-    ```
-    To see all the arguments or options available to any entry point, e.g., for training pipeline entry point run:
-    ```
-    python run_train.py --help
-    ```
+```
+python run_train.py --not-loaded --model-type eol
+```
+To see all the arguments or options available to any entry point, e.g., for training pipeline entry point run:
+```
+python run_train.py --help
+```
