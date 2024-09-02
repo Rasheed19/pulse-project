@@ -36,7 +36,7 @@ After setting up the project environment as instructed above, the following pipe
     ```
     python run_train.py --not-loaded --model-type eol
     ```
-1. `experiment` pipeline gives access to run the experiment that deals with the effect of varying pulse cycles on model performance. It requires two arguments `--threshold-type` and `--model-type`. The latter states the type of pulse threshold type to use (either `point` or `interval`) and the former gives the model type (`eol`, `rul`, or `classification`). For instance:
+1. `experiment` pipeline gives access to run the experiment that deals with the effect of varying pulse cycles on model performance. It requires two arguments `--threshold-type` and `--model-type`. The latter states the type of pulse threshold to use (either `point` or `interval`) and the former gives the model type (`eol`, `rul`, or `classification`). For instance:
     ```
     python run_experiment.py --threshold-type point --model-type eol
     ```
@@ -44,7 +44,7 @@ After setting up the project environment as instructed above, the following pipe
     ```
     python run_val.py --model-type eol
     ```
-1. `plotting` pipeline provides a medium of generating key figures in this research. This pipeline requires that you have run all the above pipelines to generate the data needed to produce the figures.This pipeline is facilited by the entrypoint `run_plot.py`:
+1. `plotting` pipeline provides a medium to generate key figures in this research. This pipeline requires that you have run all the above pipelines to generate the data needed to produce the figures. This pipeline is facilited by the entrypoint `run_plot.py`:
     ```
     python run_plot.py
     ```
