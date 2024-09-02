@@ -33,24 +33,21 @@ The graphical abstract illustrating the modelling techniques is given below:
 
 After setting up the project environment as instructed above, the following pipelines can be run from the terminal:
 1. `training` pipeline provides a medium to train the three proposed models, namely, `eol`, `rul`, and `classification`. This pipeline is facilited by the `run_train.py` entrypoint. To train the `eol` model given that the downloaded data has not been loaded into a Pyhthon dictionary:
-```
-python run_train.py --not-loaded --model-type eol
-```
-
+    ```
+    python run_train.py --not-loaded --model-type eol
+    ```
 1. `experiment` pipeline gives access to run the experiment that deals with the effect of varying pulse cycles on model performance. It requires two arguments `--threshold-type` and `--model-type`. The latter states the type of pulse threshold type to use (either `point` or `interval`) and the former gives the model type (`eol`, `rul`, or `classification`). For instance:
-```
-python run_experiment.py --threshold-type point --model-type eol
-```
-
+    ```
+    python run_experiment.py --threshold-type point --model-type eol
+    ```
 1. `leave-one-group-out` cross-validation pipeline is facilated by the `run_val.py` entrypoint. This can be run for each proposed model. For the case of `eol` model:
-```
-python run_val.py --model-type eol
-```
-
+    ```
+    python run_val.py --model-type eol
+    ```
 1. `plotting` pipeline provides a medium of generating key figures in this research. This pipeline requires that you have run all the above pipelines to generate the data needed to produce the figures.This pipeline is facilited by the entrypoint `run_plot.py`:
-```
-python run_plot.py
-```
+    ```
+    python run_plot.py
+    ```
 
 To see all the arguments or options available to any entrypoint, e.g., for training pipeline entrypoint run:
 ```
