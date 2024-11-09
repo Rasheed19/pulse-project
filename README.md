@@ -1,5 +1,5 @@
 # pulse-project
-This repository contains the codes for all the model training and experiments performed in the project _Path Signature-Based Life Prognostics of Li-ion Battery Using Pulse Test Data_.
+This repository contains the codes for all the model training and experiments performed in the project [_Path signature-based life prognostics of Li-ion battery using pulse test data_](https://www.sciencedirect.com/science/article/pii/S0306261924022037).
 
 Common models predicting the End of Life (EOL) and Remaining Useful Life (RUL) of Li-ion cells make use of long cycling data samples. This is a bottleneck when predictions are needed for decision-making but no historical data is available. A machine learning model to predict the EOL and RUL of Li-ion cells using only data contained in a single Hybrid Pulse Power Characterization (HPPC) test is proposed. The model ignores the cell’s prior cycling usage and is validated across nine different datasets each with its cathode chemistry. A model able to classify cells on whether they have passed EOL given an HPPC test is also developed.
 
@@ -53,3 +53,18 @@ To see all the arguments or options available to any entrypoint, e.g., for train
 ```
 python run_train.py --help
 ```
+
+## Reference
+If you use this work in your project, please reference:
+
+    @article{IBRAHEEM2025124820,
+        title = {Path signature-based life prognostics of Li-ion battery using pulse test data},
+        journal = {Applied Energy},
+        volume = {378},
+        pages = {124820},
+        year = {2025},
+        issn = {0306-2619},
+        doi = {https://doi.org/10.1016/j.apenergy.2024.124820},
+        url = {https://www.sciencedirect.com/science/article/pii/S0306261924022037},
+        author = {Rasheed Ibraheem and Philipp Dechent and Gonçalo {dos Reis}}
+    }

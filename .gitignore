@@ -166,6 +166,7 @@ pulsevenv/
 
 plot_def.py
 test.py
+.python-version
 
 
 # PyCharm
